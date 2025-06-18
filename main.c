@@ -6,7 +6,7 @@ unsigned char memoria[154];
 unsigned int MBR;
 unsigned short int MAR, IMM, PC;
 unsigned char IR, RO0, RO1, E, G, L;
-unsigned short int reg[4];
+unsigned short int REG[4];
 
 // 0000 0000 0000 0000 0000 0000 1001 0000
 void busca()
@@ -49,10 +49,41 @@ void decodifica()
     }
     else if (IR == 12)
     {
-        // 0000 0 00 0
-        // 0110 1 00 0
-        // 0000 0 11 0
-        RO0 = MBR & 0x07 >> 1 // Pega o byte menos significativo e move 1 bit para a direita
+        // op     |r0|
+        // 0000 0|00|0
+        RO0 = (MBR & 0x07) >> 1 // Pega os 3 bits menos significativo e move 1 bit para a direita
+    }
+    else if (IR >= 2 && IR <= 11)
+    {
+        // op    |r0|r1 |
+        // 0000 1|00|0 0|000 0000
+        RO0 = (MBR & 0x0600) >> 9; // Move 9 bits para a direita apos zerar tudo menos o R0
+        RO1 = (MBR & 0x0180) >> 7; // Move 7 bits para a direita apos zerar tudo menos o R1
+    }
+    else if (IR >= 14 && IR <= 19)
+        // op    | 0 |imm
+        // 0001 0|00|0 0000 0000 0000 0000
+        MAR = MBR & 0x01FFFF; // Pega os 17 bits menos significativos
+
+    {
+        else if (IR >= 20 && IR <= 29) if (IR == 20 || IR == 21)
+        {
+            // op    | 0|MAR
+            // 0001 0|00|0 0000 0000 0000 0000
+            MAR = MBR & 0x01FFFF; // Pega os 17 bits menos significativos
+        }
+        else if (IR >= 22 && IR <= 29)
+        {
+            // op    |r0|IMM
+            // 0001 0|00|0 0000 0000 0000 0000
+            RO0 = (MBR & 0x060000) >> 17; // Move 17 bits para a direita apos zerar tudo menos o R0
+            IMM = MBR & 0x01FFFF;         // Pega os 17 bits menos significativos
+        }
+    }
+    else
+    {
+        printf("Instrução inválida: %d\n", IR);
+        exit(1);
     }
 }
 
