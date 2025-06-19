@@ -45,7 +45,7 @@ void busca()
     }
 }
 
-// Decodifica a instrucao
+// Decodifica a instrução buscada
 void decodifica()
 {
     printf("Decodificando instrucao...\n");
@@ -56,34 +56,32 @@ void decodifica()
     else if (ir == 13)
     {
         // op     |r0|
-        // 0000 0100
-        // 0000 0110
+        // 0000 0|10|0
         ro0 = (mbr & 0x06) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
     }
-    else if (ir >= 2 && ir <= 2)
+    else if (ir >= 2 && ir <= 12)
     {
         // op    |r0|r1 |
         // 0000 1|00|0 0|000 0000
-        // 0000 0000 0110 0000
         ro0 = (mbr & 0x0600) >> 9; // Move 9 bits para a direita apos zerar tudo menos o R0
         ro1 = (mbr & 0x0180) >> 7; // Move 7 bits para a direita apos zerar tudo menos o R1
     }
-    else if (ir >= 14 && ir <= 19)
+    else if (ir >= 14 && ir <= 20)
     {
         // op    | 0  |imm
         // 0001 0|000 |0000 0000 0000 0000
         mar = mbr & 0x00FFFF; // Pega os 16 bits menos significativos
     }
-    else if (ir >= 20 && ir <= 29)
+    else if (ir >= 21 && ir <= 29)
     {
-        if (ir == 20 || ir == 21)
+        if (ir == 21 || ir == 22)
         {
             // op    |r0|  |mar
             // 0001 0|00|0 |0000 0000 0000 0000
             ro0 = (mbr & 0x060000) >> 17; // Move 17 bits para a direita apos zerar tudo menos o R0
             mar = mbr & 0x00FFFF;         // Pega os 16 bits menos significativos
         }
-        else if (ir >= 22 && ir <= 29)
+        else if (ir >= 23 && ir <= 29)
         {
             // op    |r0|  |imm
             // 0001 0|00|0 |0000 0000 0000 0000
@@ -98,7 +96,7 @@ void decodifica()
     }
 }
 
-// Executa a instrucao decodificada
+// Executa a instrução decodificada
 void executa()
 {
     printf("Executando instrucao...\n");
