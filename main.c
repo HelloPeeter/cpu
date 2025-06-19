@@ -12,7 +12,6 @@ unsigned char ir = 0, ro0 = 0, ro1 = 0, e = 0, g = 0, l = 0;
 unsigned short int reg[4] = {0};
 
 // 0000 0000 0000 0000 0000 0000 1001 0000
-
 // Busca a instrução na memória
 void busca()
 {
@@ -54,14 +53,14 @@ void decodifica()
     {
         // Nao faz nada
     }
-    else if (ir == 12)
+    else if (ir == 13)
     {
         // op     |r0|
         // 0000 0100
         // 0000 0110
         ro0 = (mbr & 0x06) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
     }
-    else if (ir >= 2 && ir <= 11)
+    else if (ir >= 2 && ir <= 2)
     {
         // op    |r0|r1 |
         // 0000 1|00|0 0|000 0000
@@ -79,7 +78,7 @@ void decodifica()
     {
         if (ir == 20 || ir == 21)
         {
-            // op    |r0| |mar
+            // op    |r0|  |mar
             // 0001 0|00|0 |0000 0000 0000 0000
             ro0 = (mbr & 0x060000) >> 17; // Move 17 bits para a direita apos zerar tudo menos o R0
             mar = mbr & 0x00FFFF;         // Pega os 16 bits menos significativos
@@ -116,8 +115,8 @@ void executa()
     else if (ir == 0b00010) // 2 - ldr rx, ry -> rX =∗ rY
     {
         // 0000 0000 0111 1000 ->120
-        reg[ro0] = memoria[reg[ro1]];
-        reg[ro0] = (reg[ro0] << 8) + memoria[reg[ro1] + 1]; // Carrega o valor da memória no endereço especificado pelo registrador rY e armazena em rX.
+        reg[ro0] = memoria[reg[ro1]];                       // Carrega o byte mais significativo da memória no endereço especificado pelo registrador rY e armazena em rX.
+        reg[ro0] = (reg[ro0] << 8) + memoria[reg[ro1] + 1]; // Carrega o byte menos significativo da memória no endereço especificado pelo registrador rY e armazena em rX.
         pc += 2;                                            // Avança o contador de programa (PC) para a próxima instrução.
     }
     else if (ir == 0b00011) // 3 -> str rx, ry -> ∗rY = rX
@@ -271,7 +270,7 @@ void executa()
     }
     else if (ir == 0b10110) // 22 -> st rX, Z -> *Z = rX
     {
-        memoria[mar] = (reg[ro0] >> 8);         // Armazena o valor do registrador rX na memória no endereço especificado por Z (mar).
+        memoria[mar] = (reg[ro0] >> 8);         // Armazena o byte mais significativo do registrador rX na memória no endereço especificado por Z (mar).
         memoria[mar + 1] = (reg[ro0] & 0x00FF); // Armazena o byte menos significativo do registrador rX na memória.
         pc += 3;                                // Avança o contador de programa (PC) para a próxima instrução.
     }
