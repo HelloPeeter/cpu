@@ -19,6 +19,7 @@ void busca()
     printf("Buscando instrucao...\n");
     mar = pc;
     mbr = memoria[mar];
+
     ir = mbr >> 3; // Move o mbr 3 bits para a direita
     if (ir == 0 || ir == 1 || ir == 13)
     {
@@ -56,13 +57,15 @@ void decodifica()
     else if (ir == 12)
     {
         // op     |r0|
-        // 0000 0|00|0
-        ro0 = (mbr & 0x07) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
+        // 0000 0100
+        // 0000 0110
+        ro0 = (mbr & 0x06) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
     }
     else if (ir >= 2 && ir <= 11)
     {
         // op    |r0|r1 |
         // 0000 1|00|0 0|000 0000
+        // 0000 0000 0110 0000
         ro0 = (mbr & 0x0600) >> 9; // Move 9 bits para a direita apos zerar tudo menos o R0
         ro1 = (mbr & 0x0180) >> 7; // Move 7 bits para a direita apos zerar tudo menos o R1
     }
@@ -101,10 +104,7 @@ void executa()
 {
     printf("Executando instrucao...\n");
 
-    // mar = 1E
-    // ro0 = 00
-
-    if (ir == 0b00000) // 0 -hlt
+    if (ir == 0b00000) // 0 - hlt
     {
         // Não realiza nenhuma operação.
     }
@@ -115,13 +115,16 @@ void executa()
     }
     else if (ir == 0b00010) // 2 - ldr rx, ry -> rX =∗ rY
     {
-        reg[ro0] = memoria[reg[ro1]]; // Carrega o valor da memória no endereço especificado pelo registrador rY e armazena em rX.
-        pc += 2;                      // Avança o contador de programa (PC) para a próxima instrução.
+        // 0000 0000 0111 1000 ->120
+        reg[ro0] = memoria[reg[ro1]];
+        reg[ro0] = (reg[ro0] << 8) + memoria[reg[ro1] + 1]; // Carrega o valor da memória no endereço especificado pelo registrador rY e armazena em rX.
+        pc += 2;                                            // Avança o contador de programa (PC) para a próxima instrução.
     }
     else if (ir == 0b00011) // 3 -> str rx, ry -> ∗rY = rX
     {
-        memoria[reg[ro1]] = reg[ro0]; // Armazena o valor do registrador rX na memória no endereço especificado pelo registrador rY.
-        pc += 2;                      // Avança o contador de programa (PC) para a próxima instrução.
+        memoria[reg[ro1]] = (reg[ro0] & 0xFF00) >> 8; // Armazena os 8 bits mais significativos de rX na memória.
+        memoria[reg[ro1] + 1] = (reg[ro0] & 0x00FF);  // Armazena os 8 bits menos significativos de rX na memória.
+        pc += 2;                                      // Avança o contador de programa (PC) para a próxima instrução.
     }
     else if (ir == 0b00100) // 4 -> add rX, rY ->> rX = rX + rY
     {
@@ -262,13 +265,15 @@ void executa()
     }
     else if (ir == 0b10101) // 21 - ld rX, Z -> rX = *Z
     {
-        reg[ro0] = memoria[mar]; // Carrega o valor da memória no endereço especificado por Z (mar) e armazena em rX.
-        pc += 3;                 // Avança o contador de programa (PC) para a próxima instrução.
+        reg[ro0] = memoria[mar];                       // Armazena o byte mais significativo da memória no endereço especificado por Z (mar) e armazena em rX.
+        reg[ro0] = (reg[ro0] << 8) + memoria[mar + 1]; // Armazena o byte menos significativo da memória ao valor de rX.
+        pc += 3;                                       // Avança o contador de programa (PC) para a próxima instrução.
     }
     else if (ir == 0b10110) // 22 -> st rX, Z -> *Z = rX
     {
-        memoria[mar] = reg[ro0]; // Armazena o valor do registrador rX na memória no endereço especificado por Z (mar).
-        pc += 3;                 // Avança o contador de programa (PC) para a próxima instrução.
+        memoria[mar] = (reg[ro0] >> 8);         // Armazena o valor do registrador rX na memória no endereço especificado por Z (mar).
+        memoria[mar + 1] = (reg[ro0] & 0x00FF); // Armazena o byte menos significativo do registrador rX na memória.
+        pc += 3;                                // Avança o contador de programa (PC) para a próxima instrução.
     }
     else if (ir == 0b10111) // 23 -> movi rX, IMM -> rX = IMM
     {
@@ -312,10 +317,9 @@ void executa()
     }
 }
 
-// Imprime estado da mem
+// Imprime estado da memoria
 void imprime_estado()
 {
-    setlocale(LC_ALL, "Portuguese Brazilian");
     printf("\nCPU:\n");
     printf("R0: 0x%04X R1: 0x%04X R2: 0x%04X R3: 0x%04X\n", reg[0], reg[1], reg[2], reg[3]);
     printf("MBR: 0x%06X MAR: 0x%04X IMM: 0x%04X PC: 0x%04X\n", mbr, mar, imm, pc);
@@ -323,25 +327,27 @@ void imprime_estado()
     printf("E: 0x%X L: 0x%X G: 0x%X\n", e, l, g);
 
     printf("\nMemoria:\n");
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < 154; i++)
     {
-        printf("%d: 0x%02X ", i, memoria[i]);
-        if ((i + 1) % 4 == 0)
+        printf("%02X: 0x%02X ", i, memoria[i]);
+        if ((i + 1) % 7 == 0)
             printf("\n");
     }
-    printf("...\n%d: 0x%02X\n", 30, memoria[0x1E]);
-    printf("...\n%d: 0x%02X\n", 153, memoria[0x99]);
+    // printf("...\n%d: 0x%02X\n", 30, memoria[0x1E]);
+    // printf("...\n%d: 0x%02X\n", 153, memoria[0x99]);
     printf("\n\nPressione uma tecla para iniciar o proximo ciclo de maquina ou aperte CTRL+C para finalizar a execucao do trabalho.");
 }
 
 int main()
 {
+    setlocale(LC_ALL, "Portuguese Brazilian");
     // Instrução teste: LD R0, 1E (IR = 21, R0 = 0b00, IMM = 0x001E)
     // Codificação: 00010101 00000000 00011110
     memoria[0x00] = 0xA8; // 10101000 → IR = 21 (0x15)
     memoria[0x01] = 0x00;
     memoria[0x02] = 0x1E;
-    memoria[0x1E] = 10;
+    memoria[0x1E] = 0X00; // 00
+    memoria[0x1F] = 0X0A; // 10
     char word;
     do
     {
