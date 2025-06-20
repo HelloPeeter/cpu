@@ -2,4 +2,4 @@ Na pasta "CPU", você vai encontrar o arquivo main.c, que possui o código do so
 
 O diretório input inclui o arquivo input.txt, onde você deve colocar o código que quer rodar. Por sua vez, o diretório output contém o arquivo executável main.exe, que é usado para processar o programa.
 
-Para usar o software, edite o arquivo programa.txt na pasta input e insira o código que deseja executar. Depois, rode o arquivo main.exe para começar o processamento.
+Para usar o software, edite o arquivo input.txt na pasta input e insira o código que deseja executar. Depois, rode o arquivo main.exe para começar o processamento.
