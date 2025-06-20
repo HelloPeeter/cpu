@@ -159,6 +159,7 @@ void executa()
     else if (ir == 0b01001) // 9 -> movr rX, rY -> rX = rY
     {
         reg[ro0] = reg[ro1];
+        pc += 2;
     }
     else if (ir == 0b01010) // 10 -> and rX,rY ->  rX = rX & rY
     {
@@ -468,18 +469,12 @@ void codifica_instrucao(int endereco, const char *instrucao)
         memoria[endereco + 1] = (imm >> 8) & 0xFF;
         memoria[endereco + 2] = imm & 0xFF;
     }
-    else
-    {
-        printf("Instrução não tratada: %s\n", instrucao);
-    }
 }
 
 int main()
 {
     setlocale(LC_ALL, "Portuguese");
-
     carregar_arquivo("../input/input.txt");
-
     char word;
     do
     {
