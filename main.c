@@ -45,7 +45,7 @@ void busca()
     }
 }
 
-// Decodifica a instrução buscada
+// Decodifica a instrucao
 void decodifica()
 {
     printf("Decodificando instrucao...\n");
@@ -56,32 +56,34 @@ void decodifica()
     else if (ir == 13)
     {
         // op     |r0|
-        // 0000 0|10|0
+        // 0000 0100
+        // 0000 0110
         ro0 = (mbr & 0x06) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
     }
-    else if (ir >= 2 && ir <= 12)
+    else if (ir >= 2 && ir <= 2)
     {
         // op    |r0|r1 |
         // 0000 1|00|0 0|000 0000
+        // 0000 0000 0110 0000
         ro0 = (mbr & 0x0600) >> 9; // Move 9 bits para a direita apos zerar tudo menos o R0
         ro1 = (mbr & 0x0180) >> 7; // Move 7 bits para a direita apos zerar tudo menos o R1
     }
-    else if (ir >= 14 && ir <= 20)
+    else if (ir >= 14 && ir <= 19)
     {
         // op    | 0  |imm
         // 0001 0|000 |0000 0000 0000 0000
         mar = mbr & 0x00FFFF; // Pega os 16 bits menos significativos
     }
-    else if (ir >= 21 && ir <= 29)
+    else if (ir >= 20 && ir <= 29)
     {
-        if (ir == 21 || ir == 22)
+        if (ir == 20 || ir == 21)
         {
             // op    |r0|  |mar
             // 0001 0|00|0 |0000 0000 0000 0000
             ro0 = (mbr & 0x060000) >> 17; // Move 17 bits para a direita apos zerar tudo menos o R0
             mar = mbr & 0x00FFFF;         // Pega os 16 bits menos significativos
         }
-        else if (ir >= 23 && ir <= 29)
+        else if (ir >= 22 && ir <= 29)
         {
             // op    |r0|  |imm
             // 0001 0|00|0 |0000 0000 0000 0000
@@ -96,7 +98,7 @@ void decodifica()
     }
 }
 
-// Executa a instrução decodificada
+// Executa a instrucao decodificada
 void executa()
 {
     printf("Executando instrucao...\n");
@@ -335,16 +337,173 @@ void imprime_estado()
     printf("\n\nPressione uma tecla para iniciar o proximo ciclo de maquina ou aperte CTRL+C para finalizar a execucao do trabalho.");
 }
 
+void carregar_arquivo(const char *nome_arquivo)
+{
+    FILE *arquivo = fopen(nome_arquivo, "r");
+    if (arquivo == NULL)
+    {
+        perror("Erro ao abrir o arquivo");
+        exit(1);
+    }
+
+    char linha[256];
+    while (fgets(linha, sizeof(linha), arquivo))
+    {
+        if (linha[0] == '\n' || linha[0] == '#' || linha[0] == ';')
+            continue;
+
+        char endereco_str[10], tipo[10], conteudo[100];
+        sscanf(linha, "%[^;];%[^;];%[^\n]", endereco_str, tipo, conteudo);
+
+        int endereco = (int)strtol(endereco_str, NULL, 16);
+
+        if (strcmp(tipo, "d") == 0)
+        {
+            unsigned char valor = (unsigned char)strtol(conteudo, NULL, 16);
+            memoria[endereco] = valor >> 8;
+            memoria[endereco + 1] = valor & 0x00FF;
+        }
+        else if (strcmp(tipo, "i") == 0)
+        {
+            codifica_instrucao(endereco, conteudo);
+        }
+    }
+
+    fclose(arquivo);
+}
+
+void codifica_instrucao(int endereco, const char *instrucao)
+{
+    char op[10], arg1[10] = "", arg2[10] = "";
+    unsigned char opcode = 0;
+    unsigned char ro0 = 0, ro1 = 0;
+    unsigned short imm = 0;
+    int num_args;
+
+    num_args = sscanf(instrucao, "%s %[^,], %s", op, arg1, arg2);
+
+    // ---------- Determinar opcode ----------
+    if (strcmp(op, "hlt") == 0)
+        opcode = 0b00000;
+    else if (strcmp(op, "nop") == 0)
+        opcode = 0b00001;
+    else if (strcmp(op, "ldr") == 0)
+        opcode = 0b00010;
+    else if (strcmp(op, "str") == 0)
+        opcode = 0b00011;
+    else if (strcmp(op, "add") == 0)
+        opcode = 0b00100;
+    else if (strcmp(op, "sub") == 0)
+        opcode = 0b00101;
+    else if (strcmp(op, "mul") == 0)
+        opcode = 0b00110;
+    else if (strcmp(op, "div") == 0)
+        opcode = 0b00111;
+    else if (strcmp(op, "cmp") == 0)
+        opcode = 0b01000;
+    else if (strcmp(op, "movr") == 0)
+        opcode = 0b01001;
+    else if (strcmp(op, "and") == 0)
+        opcode = 0b01010;
+    else if (strcmp(op, "or") == 0)
+        opcode = 0b01011;
+    else if (strcmp(op, "xor") == 0)
+        opcode = 0b01100;
+    else if (strcmp(op, "not") == 0)
+        opcode = 0b01101;
+    else if (strcmp(op, "je") == 0)
+        opcode = 0b01110;
+    else if (strcmp(op, "jne") == 0)
+        opcode = 0b01111;
+    else if (strcmp(op, "jl") == 0)
+        opcode = 0b10000;
+    else if (strcmp(op, "jle") == 0)
+        opcode = 0b10001;
+    else if (strcmp(op, "jg") == 0)
+        opcode = 0b10010;
+    else if (strcmp(op, "jge") == 0)
+        opcode = 0b10011;
+    else if (strcmp(op, "jmp") == 0)
+        opcode = 0b10100;
+    else if (strcmp(op, "ld") == 0)
+        opcode = 0b10101;
+    else if (strcmp(op, "st") == 0)
+        opcode = 0b10110;
+    else if (strcmp(op, "movi") == 0)
+        opcode = 0b10111;
+    else if (strcmp(op, "addi") == 0)
+        opcode = 0b11000;
+    else if (strcmp(op, "subi") == 0)
+        opcode = 0b11001;
+    else if (strcmp(op, "muli") == 0)
+        opcode = 0b11010;
+    else if (strcmp(op, "divi") == 0)
+        opcode = 0b11011;
+    else if (strcmp(op, "lsh") == 0)
+        opcode = 0b11100;
+    else if (strcmp(op, "rsh") == 0)
+        opcode = 0b11101;
+    else
+    {
+        printf("Instrucao invalida: %s\n", instrucao);
+        exit(1);
+    }
+
+    // ---------- Determinar registradores e imediato ----------
+    if (arg1[0] == 'r')
+        ro0 = arg1[1] - '0';
+    if (arg2[0] == 'r')
+        ro1 = arg2[1] - '0';
+    else if (strlen(arg2) > 0)
+        imm = (unsigned short)strtol(arg2, NULL, 16);
+    else if (strlen(arg1) > 0 && arg1[0] != 'r')
+        imm = (unsigned short)strtol(arg1, NULL, 16);
+
+    // ---------- Codificar na memória ----------
+    if (opcode == 0b00000 || opcode == 0b00001)
+    { // hlt, nop
+        memoria[endereco] = (opcode << 3);
+    }
+    else if (opcode == 0b01101)
+    { // not
+        memoria[endereco] = (opcode << 3) | (ro0 << 1);
+    }
+    else if (opcode >= 0b00010 && opcode <= 0b01100) // ldr, str, add, sub, mul, div, cmp, movr, and, or, xor
+    {
+        memoria[endereco] = (opcode << 3) | (ro0 << 1);
+        memoria[endereco + 1] = (ro1 << 7);
+    }
+    else if ((opcode >= 0b01110 && opcode <= 0b10100))
+    { // saltos
+        memoria[endereco] = (opcode << 3);
+        memoria[endereco + 1] = (imm >> 8) & 0xFF;
+        memoria[endereco + 2] = imm & 0xFF;
+    }
+    else if ((opcode == 0b10101) || (opcode == 0b10110))
+    { // ld, st
+        memoria[endereco] = (opcode << 3) | (ro0 << 1);
+        memoria[endereco + 1] = (imm >> 8) & 0xFF;
+        memoria[endereco + 2] = imm & 0xFF;
+    }
+    else if (opcode >= 0b10111 && opcode <= 0b11101)
+    { // imediatos
+        memoria[endereco] = (opcode << 3) | (ro0 << 1);
+        memoria[endereco + 1] = (imm >> 8) & 0xFF;
+        memoria[endereco + 2] = imm & 0xFF;
+    }
+    else
+    {
+        printf("Instrução não tratada: %s\n", instrucao);
+        exit(1);
+    }
+}
+
 int main()
 {
-    setlocale(LC_ALL, "Portuguese Brazilian");
-    // Instrução teste: LD R0, 1E (IR = 21, R0 = 0b00, IMM = 0x001E)
-    // Codificação: 00010101 00000000 00011110
-    memoria[0x00] = 0xA8; // 10101000 → IR = 21 (0x15)
-    memoria[0x01] = 0x00;
-    memoria[0x02] = 0x1E;
-    memoria[0x1E] = 0X00; // 00
-    memoria[0x1F] = 0X0A; // 10
+    setlocale(LC_ALL, "Portuguese");
+
+    carregar_arquivo("../input/input.txt");
+
     char word;
     do
     {
@@ -352,8 +511,8 @@ int main()
         decodifica();
         executa();
         imprime_estado();
-        word = getchar(); // Espera por uma tecla para continuar
-    } while (word == '\n'); // Continua enquanto a tecla pressionada for Enter
+        word = getchar();
+    } while (word == '\n');
 
     return 0;
 }
