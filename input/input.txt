@@ -1,25 +1,37 @@
-0;i;ld r0, 90
-3;i;ld r1, 92
-6;i;div r0, r1
-8;i;ld r1, 96
-b;i;ld r2, 98
-e;i;sub r1, r2
-10;i;ld r2, 94
-13;i;mul r1, r2
-15;i;add r0, r1
-17;i;ld r1, 8a
-1a;i;add r0, r1
-1c;i;st r0, 8a
-1f;i;ld r0, 8c
-22;i;ld r1, 8e
-25;i;addi r0, 1
-28;i;st r0, 8c
-2b;i;cmp r0, r1
-2d;i;jle 30
-30;i;hlt
-8a;d;0
-8c;d;1
-8e;d;a
-90;d;a
-92;d;5
-94;d;3
+0;i;movi r0, 10
+2;i;movi r1, 5
+4;i;add r0, r1
+6;i;sub r0, r1
+8;i;mul r0, r1
+a;i;div r0, r1
+c;i;movr r2, r0
+e;i;and r0, r1
+10;i;movi r0, 3
+12;i;or r0, r1
+14;i;xor r0, r1
+16;i;not r0
+18;i;movi r0, 10
+1a;i;cmp r0, r1
+1c;i;je 30
+1e;i;jne 30
+20;i;jl 30
+22;i;jle 30
+24;i;jg 30
+26;i;jge 30
+28;i;jmp 30
+2a;i;nop
+2b;i;nop
+2c;i;ldr r3, r0
+2e;i;str r1, r0
+30;i;ld r3, 90
+32;i;st r0, 92
+34;i;addi r0, 5
+36;i;subi r0, 3
+38;i;muli r0, 2
+3a;i;divi r0, 4
+3c;i;lsh r0, 2
+3e;i;rsh r0, 1
+40;i;hlt
+90;d;20
+92;d;3
+94;d;0

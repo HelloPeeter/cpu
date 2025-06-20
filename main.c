@@ -15,7 +15,7 @@ unsigned short int reg[4] = {0};
 // Busca a instrução na memória
 void busca()
 {
-    printf("Buscando instrucao...\n");
+
     mar = pc;
     mbr = memoria[mar];
 
@@ -38,17 +38,11 @@ void busca()
         mar++;
         mbr = (mbr << 8) + memoria[mar]; // Movo o mbr 8 bits para a esquerda e adiciono o byte seguinte
     }
-    else
-    {
-        printf("Instrucao invalida: %d\n", ir);
-        exit(1);
-    }
 }
 
 // Decodifica a instrucao
 void decodifica()
 {
-    printf("Decodificando instrucao...\n");
     if (ir == 0 || ir == 1)
     {
         // Nao faz nada
@@ -60,7 +54,7 @@ void decodifica()
         // 0000 0110
         ro0 = (mbr & 0x06) >> 1; // Pega os 3 bits menos significativo e move 1 bit para a direita
     }
-    else if (ir >= 2 && ir <= 2)
+    else if (ir >= 2 && ir <= 12)
     {
         // op    |r0|r1 |
         // 0000 1|00|0 0|000 0000
@@ -68,22 +62,23 @@ void decodifica()
         ro0 = (mbr & 0x0600) >> 9; // Move 9 bits para a direita apos zerar tudo menos o R0
         ro1 = (mbr & 0x0180) >> 7; // Move 7 bits para a direita apos zerar tudo menos o R1
     }
-    else if (ir >= 14 && ir <= 19)
+    else if (ir >= 14 && ir <= 20)
     {
         // op    | 0  |imm
         // 0001 0|000 |0000 0000 0000 0000
         mar = mbr & 0x00FFFF; // Pega os 16 bits menos significativos
     }
-    else if (ir >= 20 && ir <= 29)
+    else if (ir >= 21 && ir <= 29)
     {
-        if (ir == 20 || ir == 21)
+        if (ir == 21 || ir == 22)
         {
+
             // op    |r0|  |mar
             // 0001 0|00|0 |0000 0000 0000 0000
             ro0 = (mbr & 0x060000) >> 17; // Move 17 bits para a direita apos zerar tudo menos o R0
             mar = mbr & 0x00FFFF;         // Pega os 16 bits menos significativos
         }
-        else if (ir >= 22 && ir <= 29)
+        else if (ir >= 23 && ir <= 29)
         {
             // op    |r0|  |imm
             // 0001 0|00|0 |0000 0000 0000 0000
@@ -91,18 +86,11 @@ void decodifica()
             imm = mbr & 0x00FFFF;         // Pega os 16 bits menos significativos
         }
     }
-    else
-    {
-        printf("Instrução invalida: %d\n", ir);
-        exit(1);
-    }
 }
 
 // Executa a instrucao decodificada
 void executa()
 {
-    printf("Executando instrucao...\n");
-
     if (ir == 0b00000) // 0 - hlt
     {
         // Não realiza nenhuma operação.
@@ -309,11 +297,6 @@ void executa()
         reg[ro0] = reg[ro0] >> imm; // Realiza um deslocamento à direita no valor do registrador rX pelo valor imediato (IMM) e armazena o resultado em rX.
         pc += 3;                    // Avança o contador de programa (PC) para a próxima instrução.
     }
-    else
-    {
-        printf("Instrução inválida: %d\n", ir);
-        exit(1);
-    }
 }
 
 // Imprime estado da memoria
@@ -332,9 +315,7 @@ void imprime_estado()
         if ((i + 1) % 7 == 0)
             printf("\n");
     }
-    // printf("...\n%d: 0x%02X\n", 30, memoria[0x1E]);
-    // printf("...\n%d: 0x%02X\n", 153, memoria[0x99]);
-    printf("\n\nPressione uma tecla para iniciar o proximo ciclo de maquina ou aperte CTRL+C para finalizar a execucao do trabalho.");
+    printf("\n\nPressione a tecla enter para iniciar o proximo ciclo de maquina ou aperte CTRL+C para finalizar a execucao do trabalho.");
 }
 
 void carregar_arquivo(const char *nome_arquivo)
@@ -378,9 +359,9 @@ void codifica_instrucao(int endereco, const char *instrucao)
     unsigned char opcode = 0;
     unsigned char ro0 = 0, ro1 = 0;
     unsigned short imm = 0;
-    int num_args;
+    // int num_args;
 
-    num_args = sscanf(instrucao, "%s %[^,], %s", op, arg1, arg2);
+    sscanf(instrucao, "%s %[^,], %s", op, arg1, arg2);
 
     // ---------- Determinar opcode ----------
     if (strcmp(op, "hlt") == 0)
@@ -443,11 +424,6 @@ void codifica_instrucao(int endereco, const char *instrucao)
         opcode = 0b11100;
     else if (strcmp(op, "rsh") == 0)
         opcode = 0b11101;
-    else
-    {
-        printf("Instrucao invalida: %s\n", instrucao);
-        exit(1);
-    }
 
     // ---------- Determinar registradores e imediato ----------
     if (arg1[0] == 'r')
@@ -460,33 +436,34 @@ void codifica_instrucao(int endereco, const char *instrucao)
         imm = (unsigned short)strtol(arg1, NULL, 16);
 
     // ---------- Codificar na memória ----------
-    if (opcode == 0b00000 || opcode == 0b00001)
-    { // hlt, nop
+    if (opcode == 0b00000 || opcode == 0b00001) // 0-2  hlt e nop
+    {
         memoria[endereco] = (opcode << 3);
     }
-    else if (opcode == 0b01101)
-    { // not
-        memoria[endereco] = (opcode << 3) | (ro0 << 1);
-    }
-    else if (opcode >= 0b00010 && opcode <= 0b01100) // ldr, str, add, sub, mul, div, cmp, movr, and, or, xor
+    else if (opcode == 0b01101) // 13 - not
     {
         memoria[endereco] = (opcode << 3) | (ro0 << 1);
+    }
+    else if (opcode >= 0b00010 && opcode <= 0b01100) // 2-12 ldr, str, add, sub, mul, div, cmp, movr, and, or, xor
+    {
+        memoria[endereco] = (opcode << 3) | (ro0 << 1) | ((ro1 >> 1) & 0x01);
         memoria[endereco + 1] = (ro1 << 7);
     }
-    else if ((opcode >= 0b01110 && opcode <= 0b10100))
-    { // saltos
+    else if ((opcode >= 0b01110 && opcode <= 0b10100)) // je, jne, jl, jle, jg, jge, jmp
+    {
         memoria[endereco] = (opcode << 3);
         memoria[endereco + 1] = (imm >> 8) & 0xFF;
         memoria[endereco + 2] = imm & 0xFF;
     }
-    else if ((opcode == 0b10101) || (opcode == 0b10110))
-    { // ld, st
+    else if ((opcode == 0b10101) || (opcode == 0b10110)) // ld, st
+    {
         memoria[endereco] = (opcode << 3) | (ro0 << 1);
         memoria[endereco + 1] = (imm >> 8) & 0xFF;
         memoria[endereco + 2] = imm & 0xFF;
     }
-    else if (opcode >= 0b10111 && opcode <= 0b11101)
-    { // imediatos
+    else if (opcode >= 0b10111 && opcode <= 0b11101) // imediatos
+    {
+
         memoria[endereco] = (opcode << 3) | (ro0 << 1);
         memoria[endereco + 1] = (imm >> 8) & 0xFF;
         memoria[endereco + 2] = imm & 0xFF;
@@ -494,7 +471,6 @@ void codifica_instrucao(int endereco, const char *instrucao)
     else
     {
         printf("Instrução não tratada: %s\n", instrucao);
-        exit(1);
     }
 }
 
@@ -507,6 +483,7 @@ int main()
     char word;
     do
     {
+        system("cls");
         busca();
         decodifica();
         executa();
