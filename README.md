@@ -43,7 +43,7 @@ Cada linha segue:
 
 ## 📏 Tamanho das Instruções
 
-Cada instrução ocupa **1, 2 ou 3 bytes**, dependendo da operação e dos operandos. Abaixo está a tabela corrigida com base no formato de instrução da CPU.
+Cada instrução ocupa **1, 2 ou 3 bytes**, dependendo da operação e dos operandos. Abaixo está a tabela com base no formato de instrução da CPU.
 
 ---
 
@@ -68,9 +68,9 @@ Cada instrução ocupa **1, 2 ou 3 bytes**, dependendo da operação e dos opera
 
 | Instruções                         | Operandos                    | Descrição                                                |
 |-----------------------------------|-------------------------------|------------------------------------------------------------|
-| `LD rX, Z`, `ST rX, Z`            | 1 registrador + 16 bits end. | Carrega/salva dado de/para endereço de memória            |
+| `LD rX, Z`, `ST rX, Z`, etc       | 1 registrador + 16 bits end. | Carrega/salva dado de/para endereço de memória            |
 | `JE Z`, `JNE Z`, `JMP Z`, etc     | endereço de 16 bits (MAR)    | Todos os jumps usam 2 bytes de endereço                   |
-| `MOVI rX, IMM`, `ADDI rX, IMM`    | registrador + imediato (16b) | Operações com valores imediatos                           |
+| `MOVI rX, IMM`, `ADDI rX, IMM`, etc| registrador + imediato (16b) | Operações com valores imediatos                           |
 
 ---
 
