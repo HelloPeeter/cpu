@@ -94,8 +94,9 @@ Cada instrução ocupa **1, 2 ou 3 bytes**, dependendo da operação e dos opera
 
 Formato das instruções:
 
-![Formato das instruções-1](https://github.com/user-attachments/assets/06311c77-7ac5-4fba-b5cd-54c56332d8fe)
-![Formato das instruçoes-2](https://github.com/user-attachments/assets/e61a460e-bc60-4f1c-abff-77b0e2a702d7)
+![Formato das Instruções-1](https://github.com/user-attachments/assets/cbb80256-c66b-4632-9208-93e6c3db5eb3)
+![Formato das instruções-2](https://github.com/user-attachments/assets/06311c77-7ac5-4fba-b5cd-54c56332d8fe)
+![Formato das instruçoes-3](https://github.com/user-attachments/assets/e61a460e-bc60-4f1c-abff-77b0e2a702d7)
 
 
 ---
